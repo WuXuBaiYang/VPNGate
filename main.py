@@ -6,7 +6,7 @@ from fake_useragent import UserAgent
 # 模拟useragent
 fake_user_agent = UserAgent(use_cache_server=False)
 # 基础地址
-base_url = "http://www.vpngate.net/cn/"
+base_url = "http://www.vpngate.net/en/"
 # 基础图片地址
 base_image_url = "http://www.vpngate.net/images/flags/"
 
@@ -144,20 +144,30 @@ def parse_vpn_param(param_list):
             vpn_model.physical_location = get_first_attr_tail(param, "br")
             pass
         elif index == 1:
-            # DDNS 主机名
-            vpn_model.ddns_host_name = "..."
-            # IP 地址
-            vpn_model.ip_address = "..."
-            # ISP 主机名
-            vpn_model.isp_host_name = "..."
+            for span in param.xpath(".//span"):
+                span_text = span.text
+                if span_text.startswith("vpn"):
+                    # DDNS 主机名
+                    vpn_model.ddns_host_name = span_text
+                elif span_text.startswith("(") and span_text.endswith(")"):
+                    # ISP 主机名
+                    vpn_model.isp_host_name = span_text.lstrip("(").rstrip(")")
+                else:
+                    # IP 地址
+                    vpn_model.ip_address = span_text
             pass
         elif index == 2:
-            # VPN 会话数
-            vpn_model.vpn_sessions = "..."
-            # 运行时间
-            vpn_model.up_time = "..."
+            for span in param.xpath(".//span"):
+                span_text = span.text
+                if span_text.endswith("sessions"):
+                    # VPN 会话数
+                    vpn_model.vpn_sessions = span_text.rstrip("sessions").strip()
+                else:
+                    # 运行时间
+                    vpn_model.up_time = span_text
             # 累计用户数
-            vpn_model.cumulative_users = "..."
+            vpn_model.cumulative_users = [br.tail for br in param.xpath("br") if br.tail is not None][0].lstrip(
+                "Total").rstrip("users").strip()
             pass
         elif index == 3:
             # 线路质量
@@ -217,7 +227,7 @@ def parse_vpn_gate_page(page_url):
     # 先获取到table中的cell
     cell_list = selector.xpath("//table[@id='vg_hosts_table_id' and not(@align)]//tr")
     for cell in cell_list:
-        param_list = cell.xpath("td")
+        param_list = cell.xpath(".//td")
         # header的属性只有1个，所以属性数量大于1的就是需要用到的参数集合
         if len(param_list) > 0 and len(param_list[0].attrib) > 1:
             parse_vpn_param(param_list)
