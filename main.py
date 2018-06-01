@@ -11,6 +11,58 @@ base_url = "http://www.vpngate.net/cn/"
 base_image_url = "http://www.vpngate.net/images/flags/"
 
 
+class VPNModel:
+    """
+    vpn数据对象
+    """
+    # 国家
+    country = ""
+    # 物理地址
+    physical_location = ""
+    # DDNS 主机名
+    ddns_host_name = ""
+    # IP 地址
+    ip_address = ""
+    # ISP 主机名
+    isp_host_name = ""
+    # 会话数
+    vpn_sessions = ""
+    # 运行时间
+    up_time = ""
+    # 累计用户
+    cumulative_users = ""
+    # 线路质量
+    line_quality = ""
+    # 累计流量
+    cumulative_transfers = ""
+    # 日志策略
+    logging_policy = ""
+    # SSL-VPN是否支持
+    ssl_vpn = False
+    # SSL-VPN的tcp端口号
+    ssl_vpn_tcp = ""
+    # SSL-VPN的udp是否支持
+    ssl_vpn_udp = False
+    # L2TP/IPsec是否支持
+    l2tp_ipsec = False
+    # OPEN-VPN是否支持
+    open_vpn = False
+    # OPEN-VPN的tcp端口号
+    open_vpn_tcp = ""
+    # OPEN-VPN的udp端口号
+    open_vpn_udp = ""
+    # MS-SSTP是否支持
+    ms_sstp = False
+    # MS-SSTP的主机名
+    ms_sstp_host_name = ""
+    # 代理提供者名称
+    volunteer_operator_name = ""
+    # 代理提供者的留言
+    volunteer_operator_message = ""
+    # 服务器评分
+    score = ""
+
+
 def get_headers():
     """
     获取头部参数
@@ -82,42 +134,75 @@ def parse_vpn_param(param_list):
     :param param_list: 参数集合
     :return:
     """
+    vpn_model = VPNModel()
     for index in range(len(param_list)):
         param = param_list[index]
         if index == 0:
-            # 国家 / 地区 (物理位置)
-            national_flag_url = base_image_url + os.path.basename(get_first_attr(param, "img", "src"))
-            country = get_first_attr_tail(param, "br")
-            print("国旗：", national_flag_url, "\t国家：", country, end="", sep="")
+            # 国家
+            vpn_model.country = base_image_url + os.path.basename(get_first_attr(param, "img", "src"))
+            # 物理地址
+            vpn_model.physical_location = get_first_attr_tail(param, "br")
             pass
         elif index == 1:
-            # DDNS 主机名 IP 地址 (ISP 主机名)
+            # DDNS 主机名
+            vpn_model.ddns_host_name = "..."
+            # IP 地址
+            vpn_model.ip_address = "..."
+            # ISP 主机名
+            vpn_model.isp_host_name = "..."
             pass
         elif index == 2:
-            # VPN 会话数 运行时间 累计用户数
+            # VPN 会话数
+            vpn_model.vpn_sessions = "..."
+            # 运行时间
+            vpn_model.up_time = "..."
+            # 累计用户数
+            vpn_model.cumulative_users = "..."
             pass
         elif index == 3:
-            # 线路质量 吞吐量和 Ping 累积转移 日志策略
+            # 线路质量
+            vpn_model.line_quality = "..."
+            # 累计流量
+            vpn_model.cumulative_transfers = "..."
+            # 日志策略
+            vpn_model.logging_policy = "..."
             pass
         elif index == 4:
-            # SSL-VPN Windows (合适的)
+            # SSL-VPN是否支持
+            vpn_model.ssl_vpn = None
+            # SSL-VPN的tcp端口
+            vpn_model.ssl_vpn_tcp = "..."
+            # SSL-VPN是否支持udp
+            vpn_model.ssl_vpn_udp = "..."
             pass
         elif index == 5:
-            # L2TP/IPsec Windows, Mac,iPhone, Android 无需 VPN 客户端
+            # L2TP/IPsec是否支持
+            vpn_model.l2tp_ipsec = None
             pass
         elif index == 6:
-            # OpenVPN Windows, Mac,iPhone, Android
+            # OpenVPN是否支持
+            vpn_model.open_vpn = None
+            # OpenVPN的tcp端口
+            vpn_model.open_vpn_tcp = "..."
+            # OpenVPN的udp端口
+            vpn_model.open_vpn_udp = "..."
             pass
         elif index == 7:
-            # MS-SSTP Windows Vista,7, 8, RT 无需 VPN 客户端
+            # MS-SSTP是否支持
+            vpn_model.ms_sstp = None
+            # MS-SSTP的主机名
+            vpn_model.ms_sstp_host_name = "..."
             pass
         elif index == 8:
-            # 志愿者操作员的名字 (+ 操作员的消息)
+            # 代理提供者的名称
+            vpn_model.volunteer_operator_name = "..."
+            # 代理提供者的浏览
+            vpn_model.volunteer_operator_message = "..."
             pass
         elif index == 9:
-            # 总分 (质量)
+            # 服务器评分
+            vpn_model.score = "..."
             pass
-    print("")
     pass
 
 
