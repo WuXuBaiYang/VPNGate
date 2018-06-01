@@ -6,7 +6,9 @@ from fake_useragent import UserAgent
 # 模拟useragent
 fake_user_agent = UserAgent(use_cache_server=False)
 # 基础地址
-base_url = "http://www.vpngate.net/cn"
+base_url = "http://www.vpngate.net/cn/"
+# 基础图片地址
+base_image_url = "http://www.vpngate.net/images/flags/"
 
 
 def get_headers():
@@ -22,7 +24,7 @@ def get_proxies():
     获取代理
     :return: 获取代理参数
     """
-    return {"http": "http://127.0.0.1:1087", "https": "https://127.0.0.1:1087"}
+    return {"http": "http://127.0.0.1:1087"}
 
 
 def http_get(request_url):
@@ -34,16 +36,59 @@ def http_get(request_url):
     return requests.get(request_url, headers=get_headers(), proxies=get_proxies())
 
 
+def get_first_attr(node, xpath, attr):
+    """
+    获取属性值，排除空参
+    :param node:节点
+    :param xpath:xpath语句
+    :param attr:属性名
+    :return:
+    """
+    target_list = node.xpath(xpath)
+    if len(target_list) > 0:
+        return target_list[0].get(attr)
+    return ""
+
+
+def get_first_attr_text(node, xpath):
+    """
+    获取text属性
+    :param node:
+    :param xpath:
+    :return:
+    """
+    target_list = node.xpath(xpath)
+    if len(target_list) > 0:
+        return target_list[0].text
+    return ""
+
+
+def get_first_attr_tail(node, xpath):
+    """
+    获取tail属性
+    :param node:
+    :param xpath:
+    :return:
+    """
+    target_list = node.xpath(xpath)
+    if len(target_list) > 0:
+        return target_list[0].tail
+    return ""
+
+
 def parse_vpn_param(param_list):
     """
     解析vpn参数
     :param param_list: 参数集合
     :return:
     """
-    for index in len(param_list):
+    for index in range(len(param_list)):
         param = param_list[index]
         if index == 0:
             # 国家 / 地区 (物理位置)
+            national_flag_url = base_image_url + os.path.basename(get_first_attr(param, "img", "src"))
+            country = get_first_attr_tail(param, "br")
+            print("国旗：", national_flag_url, "\t国家：", country, end="", sep="")
             pass
         elif index == 1:
             # DDNS 主机名 IP 地址 (ISP 主机名)
@@ -72,6 +117,7 @@ def parse_vpn_param(param_list):
         elif index == 9:
             # 总分 (质量)
             pass
+    print("")
     pass
 
 
