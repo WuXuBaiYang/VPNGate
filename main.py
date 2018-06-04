@@ -4,7 +4,7 @@ import os
 from fake_useragent import UserAgent
 
 # 模拟useragent
-fake_user_agent = UserAgent(use_cache_server=False)
+# fake_user_agent = UserAgent(use_cache_server=False)
 # 基础地址
 base_url = "http://www.vpngate.net/en/"
 # 基础图片地址
@@ -33,6 +33,8 @@ class VPNModel:
     cumulative_users = ""
     # 线路质量
     line_quality = ""
+    # ping值
+    ping = ""
     # 累计流量
     cumulative_transfers = ""
     # 日志策略
@@ -57,8 +59,6 @@ class VPNModel:
     ms_sstp_host_name = ""
     # 代理提供者名称
     volunteer_operator_name = ""
-    # 代理提供者的留言
-    volunteer_operator_message = ""
     # 服务器评分
     score = ""
 
@@ -68,7 +68,9 @@ def get_headers():
     获取头部参数
     :return: 返回头部参数
     """
-    return {"User-Agent": fake_user_agent.random}
+    # return {"User-Agent": fake_user_agent.random}
+    return {
+        "User-Agent": "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_0) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11"}
 
 
 def get_proxies():
@@ -171,47 +173,64 @@ def parse_vpn_param(param_list):
             pass
         elif index == 3:
             # 线路质量
-            vpn_model.line_quality = "..."
-            # 累计流量
-            vpn_model.cumulative_transfers = "..."
+            vpn_model.line_quality = get_first_attr_text(param, ".//span")
+            for b in param.xpath(".//b"):
+                b_text = b.text
+                if b_text is not None:
+                    if b_text.endswith("ms") or b_text.endswith("-"):
+                        # ping值
+                        vpn_model.ping = b_text
+                    elif b_text.endswith("GB"):
+                        # 累计流量
+                        vpn_model.cumulative_transfers = b_text
             # 日志策略
-            vpn_model.logging_policy = "..."
+            br_list = param.xpath(".//br")
+            vpn_model.logging_policy = [br_list[len(br_list) - 1].tail if len(br_list) > 0 else ""][0]
             pass
         elif index == 4:
-            # SSL-VPN是否支持
-            vpn_model.ssl_vpn = None
-            # SSL-VPN的tcp端口
-            vpn_model.ssl_vpn_tcp = "..."
-            # SSL-VPN是否支持udp
-            vpn_model.ssl_vpn_udp = "..."
+            if len(param.xpath("./a")) > 0:
+                # SSL-VPN是否支持
+                vpn_model.ssl_vpn = True
+                for br in param.xpath("./br"):
+                    br_text = br.tail
+                    if br_text.startswith("TCP:"):
+                        # SSL-VPN的tcp端口
+                        vpn_model.ssl_vpn_tcp = br_text.lstrip("TCP:").strip()
+                    elif br_text.startswith("UDP:"):
+                        # SSL-VPN是否支持udp
+                        vpn_model.ssl_vpn_udp = br_text.lstrip("UDP:").strip()
             pass
         elif index == 5:
             # L2TP/IPsec是否支持
-            vpn_model.l2tp_ipsec = None
+            vpn_model.l2tp_ipsec = len(param.xpath("./a")) > 0
             pass
         elif index == 6:
-            # OpenVPN是否支持
-            vpn_model.open_vpn = None
-            # OpenVPN的tcp端口
-            vpn_model.open_vpn_tcp = "..."
-            # OpenVPN的udp端口
-            vpn_model.open_vpn_udp = "..."
+            if len(param.xpath("./a")) > 0:
+                # OpenVPN是否支持
+                vpn_model.open_vpn = True
+                for br in param.xpath("./br"):
+                    br_text = br.tail
+                    if br_text.startswith("TCP:"):
+                        # OpenVPN的tcp端口
+                        vpn_model.open_vpn_tcp = br_text.lstrip("TCP:").strip()
+                    elif br_text.startswith("UDP:"):
+                        # OpenVPN的udp端口
+                        vpn_model.open_vpn_udp = br_text.lstrip("UDP:").strip()
             pass
         elif index == 7:
-            # MS-SSTP是否支持
-            vpn_model.ms_sstp = None
-            # MS-SSTP的主机名
-            vpn_model.ms_sstp_host_name = "..."
+            if len(param.xpath("./a")) > 0:
+                # MS-SSTP是否支持
+                vpn_model.ms_sstp = True
+                # MS-SSTP的主机名
+                vpn_model.ms_sstp_host_name = get_first_attr_text(param, ".//span[@style='color: #006600;']")
             pass
         elif index == 8:
             # 代理提供者的名称
-            vpn_model.volunteer_operator_name = "..."
-            # 代理提供者的浏览
-            vpn_model.volunteer_operator_message = "..."
+            vpn_model.volunteer_operator_name = get_first_attr_text(param, "./i/b")
             pass
         elif index == 9:
             # 服务器评分
-            vpn_model.score = "..."
+            vpn_model.score = get_first_attr_text(param, ".//span")
             pass
     pass
 
