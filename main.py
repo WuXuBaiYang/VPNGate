@@ -1,20 +1,28 @@
+import os
+
+import time
 import requests
 from lxml import html
-import os
-from fake_useragent import UserAgent
+from pymongo import MongoClient
 
-# 模拟useragent
-# fake_user_agent = UserAgent(use_cache_server=False)
 # 基础地址
 base_url = "http://www.vpngate.net/en/"
 # 基础图片地址
 base_image_url = "http://www.vpngate.net/images/flags/"
+# 初始化mongodb客户端
+mongo_client = MongoClient(host="127.0.0.1", port=27017)
+vpngate_collection = mongo_client.python_spider.vpn_gate
 
 
 class VPNModel:
     """
     vpn数据对象
     """
+
+    def __init__(self, update_timestamp):
+        self.update_timestamp = update_timestamp
+        pass
+
     # 国家
     country = ""
     # 物理地址
@@ -61,6 +69,8 @@ class VPNModel:
     volunteer_operator_name = ""
     # 服务器评分
     score = ""
+    # 更新时间戳
+    update_timestamp = 0
 
 
 def get_headers():
@@ -68,7 +78,6 @@ def get_headers():
     获取头部参数
     :return: 返回头部参数
     """
-    # return {"User-Agent": fake_user_agent.random}
     return {
         "User-Agent": "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_0) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11"}
 
@@ -136,6 +145,13 @@ def write_to_database(vpn_model):
     :param vpn_model: vpngate的数据对象
     :return:
     """
+    # 装类对象转换为json字符串
+    model_dict = {}
+    model_dict.update(vpn_model.__dict__)
+    # 更新数据到数据库，存在则覆盖，不存在则插入
+    vpngate_collection.update({"ip_address": vpn_model.ip_address}, model_dict, upsert=True)
+    print("IP：", vpn_model.ip_address, "已插入数据库", sep="")
+    pass
 
 
 def parse_vpn_param(param_list):
@@ -144,7 +160,7 @@ def parse_vpn_param(param_list):
     :param param_list: 参数集合
     :return:
     """
-    vpn_model = VPNModel()
+    vpn_model = VPNModel(time.time())
     for index in range(len(param_list)):
         param = param_list[index]
         if index == 0:
@@ -240,6 +256,7 @@ def parse_vpn_param(param_list):
             # 服务器评分
             vpn_model.score = get_first_attr_text(param, ".//span")
             pass
+    write_to_database(vpn_model)
     pass
 
 
@@ -249,6 +266,7 @@ def parse_vpn_gate_page(page_url):
     :param page_url: 页面地址
     :return:
     """
+    print("正在请求VPNGate")
     response = http_get(page_url).content
     selector = html.fromstring(response)
     # 先获取到table中的cell
@@ -258,6 +276,7 @@ def parse_vpn_gate_page(page_url):
         # header的属性只有1个，所以属性数量大于1的就是需要用到的参数集合
         if len(param_list) > 0 and len(param_list[0].attrib) > 1:
             parse_vpn_param(param_list)
+    print("VPNGate解析完成") if len(cell_list) > 0 else print("请求失败，请重试")
     pass
 
 
