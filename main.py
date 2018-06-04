@@ -130,6 +130,14 @@ def get_first_attr_tail(node, xpath):
     return ""
 
 
+def write_to_database(vpn_model):
+    """
+    写入到数据库
+    :param vpn_model: vpngate的数据对象
+    :return:
+    """
+
+
 def parse_vpn_param(param_list):
     """
     解析vpn参数
